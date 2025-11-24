@@ -2,15 +2,18 @@ const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
   host: process.env.MYSQL_HOST || 'junction.proxy.rlwy.net',
-  port: process.env.MYSQL_PORT || 27706,
+  port: parseInt(process.env.MYSQL_PORT) || 27706,
   user: process.env.MYSQL_USER || 'root',
   password: process.env.MYSQL_PASSWORD || 'VpgpZJNWWKZgdFAGpOXJYHhPwhEIpLpU',
   database: process.env.MYSQL_DATABASE || 'railway',
   waitForConnections: true,
   connectionLimit: 10,
+  maxIdle: 10,
+  idleTimeout: 60000,
   queueLimit: 0,
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  keepAliveInitialDelay: 10000,
+  connectTimeout: 30000
 });
 
 // Test connection on startup
