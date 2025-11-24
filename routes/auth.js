@@ -27,9 +27,13 @@ router.post('/login', async (req, res) => {
       });
     }
     
-    // Query PO data
+    // Query PO data with all fields Flutter expects
     const [rows] = await db.query(
-      'SELECT id, po_name, email, phone, address, company_code FROM pos WHERE email = ? AND is_active = 1',
+      `SELECT id, po_name as name, email, phone, address, company_code, 
+              logo_url, npwp, business_license, account_number, bank_name, 
+              account_holder, commission_rate, status, verified_at, 
+              rejected_reason, created_at 
+       FROM pos WHERE email = ? AND is_active = 1`,
       [email]
     );
     
@@ -53,18 +57,25 @@ router.post('/login', async (req, res) => {
       { expiresIn: '7d' }
     );
     
-    // Return response matching Flutter expectations
+    // Return response matching Flutter PO model exactly
     res.json({
       success: true,
       message: 'Login berhasil',
       token,
       po: {
         id: po.id,
-        po_name: po.po_name,
-        email: po.email,
-        phone: po.phone,
-        address: po.address,
-        company_code: po.company_code
+        name: po.name, // Changed from po_name to name
+        logo_url: po.logo_url,
+        npwp: po.npwp,
+        business_license: po.business_license,
+        account_number: po.account_number,
+        bank_name: po.bank_name,
+        account_holder: po.account_holder,
+        commission_rate: po.commission_rate || 10.0,
+        status: po.status || 'pending',
+        verified_at: po.verified_at,
+        rejected_reason: po.rejected_reason,
+        created_at: po.created_at
       }
     });
     
