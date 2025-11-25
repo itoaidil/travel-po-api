@@ -8,7 +8,7 @@ router.get('/', verifyToken, async (req, res) => {
   try {
     const [vehicles] = await db.query(
       `SELECT id, vehicle_number, plate_number, vehicle_type, brand, model, year, 
-              capacity, status, is_active, created_at, updated_at
+              capacity as seat_capacity, status, is_active, created_at, updated_at
        FROM vehicles 
        WHERE po_id = ? 
        ORDER BY created_at DESC`,
