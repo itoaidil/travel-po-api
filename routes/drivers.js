@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
+const bcrypt = require('bcrypt');
 const { verifyToken } = require('./auth');
 
 // GET /api/drivers - Get all drivers for logged-in PO
@@ -41,21 +42,40 @@ router.post('/', verifyToken, async (req, res) => {
       });
     }
     
+    // Generate default password and hash it
+    const defaultPassword = 'driver123'; // Default password for new drivers
+    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+    
+    // Create a user first for this driver
+    const [userResult] = await db.query(
+      `INSERT INTO users (username, email, password, phone, user_type, is_active) 
+       VALUES (?, ?, ?, ?, 'driver', 1)`,
+      [
+        full_name.replace(/\s+/g, '_').toLowerCase(), // username from name
+        `driver_${Date.now()}@temp.com`, // temporary email
+        hashedPassword,
+        phone
+      ]
+    );
+    
+    const userId = userResult.insertId;
+    
+    // Then create the driver record
     const [result] = await db.query(
       `INSERT INTO drivers 
-       (po_id, full_name, license_number, license_type, phone, address, date_of_birth, status, created_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'active', NOW())`,
-      [req.poId, full_name, license_number, license_type || 'A', phone, address || null, date_of_birth || null]
+       (user_id, po_id, full_name, license_number, license_type, phone, address, date_of_birth, status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+      [userId, req.poId, full_name, license_number, license_type || 'A', phone, address || null, date_of_birth || null]
     );
     
     res.status(201).json({ 
       success: true, 
       message: 'Driver berhasil ditambahkan',
-      data: { id: result.insertId }
+      data: { id: result.insertId, user_id: userId }
     });
   } catch (error) {
     console.error('Create driver error:', error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan server' });
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan server: ' + error.message });
   }
 });
 

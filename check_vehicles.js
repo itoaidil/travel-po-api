@@ -1,12 +1,38 @@
-const { Pool } = require('pg');
+const mysql = require('mysql2/promise');
+require('dotenv').config();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:jTgZAiuTxRTqEKBufZBSSsUyULZPYyDh@autorack.proxy.rlwy.net:22916/railway'
-});
+// Resolve values like "${VAR}" to the actual env var value if present
+function resolveRef(val) {
+  if (typeof val === 'string' && /^\$\{[A-Z0-9_]+\}$/.test(val)) {
+    const name = val.slice(2, -1);
+    return process.env[name];
+  }
+  return val;
+}
+
+// Prefer Railway's MYSQL* vars, then fallback to local defaults
+const dbConfig = {
+  host: resolveRef(process.env.MYSQLHOST) || resolveRef(process.env.MYSQL_HOST) || 'localhost',
+  user: resolveRef(process.env.MYSQLUSER) || resolveRef(process.env.MYSQL_USER) || 'root',
+  password: resolveRef(process.env.MYSQLPASSWORD) || resolveRef(process.env.MYSQL_PASSWORD) || '',
+  database: resolveRef(process.env.MYSQLDATABASE) || resolveRef(process.env.MYSQL_DATABASE) || 'railway',
+  port: Number(resolveRef(process.env.MYSQLPORT) || resolveRef(process.env.MYSQL_PORT) || 3306),
+  connectTimeout: 30000, // 30 seconds for Railway cold start
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0
+};
 
 async function checkVehicles() {
+  let connection;
   try {
-    const result = await pool.query(`
+    console.log('Connecting to MySQL...');
+    console.log(`Host: ${dbConfig.host}:${dbConfig.port}`);
+    console.log(`Database: ${dbConfig.database}`);
+    
+    connection = await mysql.createConnection(dbConfig);
+    console.log('✅ Connected to MySQL!\n');
+    
+    const [result] = await connection.query(`
       SELECT 
         id, 
         vehicle_number, 
@@ -25,7 +51,7 @@ async function checkVehicles() {
     `);
     
     console.log('\n=== Latest 5 Vehicles ===\n');
-    result.rows.forEach(vehicle => {
+    result.forEach(vehicle => {
       console.log(`ID: ${vehicle.id}`);
       console.log(`Vehicle Number: ${vehicle.vehicle_number}`);
       console.log(`Plate Number: ${vehicle.plate_number}`);
@@ -40,11 +66,13 @@ async function checkVehicles() {
       console.log('---');
     });
     
-    await pool.end();
+    await connection.end();
     process.exit(0);
   } catch (err) {
     console.error('Error:', err.message);
-    await pool.end();
+    if (err.code) console.error('Code:', err.code);
+    if (err.sqlMessage) console.error('SQL Error:', err.sqlMessage);
+    if (connection) await connection.end();
     process.exit(1);
   }
 }

@@ -8,9 +8,10 @@ router.get('/', verifyToken, async (req, res) => {
   try {
     const [travels] = await db.query(
       `SELECT t.*, 
-              v.plate_number, v.vehicle_type,
+              v.plate_number, v.vehicle_type, v.capacity as total_seats,
               d.full_name as driver_name,
-              (SELECT COUNT(*) FROM bookings WHERE travel_id = t.id) as total_bookings
+              (SELECT COUNT(*) FROM bookings WHERE travel_id = t.id) as total_bookings,
+              (v.capacity - COALESCE((SELECT COUNT(*) FROM bookings WHERE travel_id = t.id AND t.status != 'cancelled'), 0)) as available_seats
        FROM travels t
        LEFT JOIN vehicles v ON t.vehicle_id = v.id
        LEFT JOIN drivers d ON t.driver_id = d.id
@@ -37,23 +38,22 @@ router.post('/', verifyToken, async (req, res) => {
       destination,
       departure_time,
       arrival_time,
-      price,
-      total_seats
+      price
     } = req.body;
     
-    if (!vehicle_id || !route_name || !origin || !destination || !departure_time || !price || !total_seats) {
+    if (!vehicle_id || !origin || !destination || !departure_time || !price) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Semua field wajib diisi' 
+        message: 'Kendaraan, asal, tujuan, waktu keberangkatan, dan harga wajib diisi' 
       });
     }
     
     const [result] = await db.query(
       `INSERT INTO travels 
        (po_id, vehicle_id, driver_id, route_name, origin, destination, departure_time, arrival_time, 
-        price, total_seats, available_seats, status, created_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'scheduled', NOW())`,
-      [req.poId, vehicle_id, driver_id || null, route_name, origin, destination, departure_time, arrival_time || null, price, total_seats, total_seats]
+        price, status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'scheduled')`,
+      [req.poId, vehicle_id, driver_id || null, route_name || `${origin} - ${destination}`, origin, destination, departure_time, arrival_time || null, price]
     );
     
     res.status(201).json({ 
@@ -63,7 +63,7 @@ router.post('/', verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Create travel error:', error);
-    res.status(500).json({ success: false, message: 'Terjadi kesalahan server' });
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan server: ' + error.message });
   }
 });
 
@@ -79,16 +79,15 @@ router.put('/:id', verifyToken, async (req, res) => {
       departure_time,
       arrival_time,
       price,
-      total_seats,
       status
     } = req.body;
     
     const [result] = await db.query(
       `UPDATE travels 
        SET vehicle_id = ?, driver_id = ?, route_name = ?, origin = ?, destination = ?,
-           departure_time = ?, arrival_time = ?, price = ?, total_seats = ?, status = ?
+           departure_time = ?, arrival_time = ?, price = ?, status = ?
        WHERE id = ? AND po_id = ?`,
-      [vehicle_id, driver_id, route_name, origin, destination, departure_time, arrival_time, price, total_seats, status || 'scheduled', req.params.id, req.poId]
+      [vehicle_id, driver_id, route_name, origin, destination, departure_time, arrival_time, price, status || 'scheduled', req.params.id, req.poId]
     );
     
     if (result.affectedRows === 0) {
