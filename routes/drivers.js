@@ -8,7 +8,7 @@ router.get('/', verifyToken, async (req, res) => {
   try {
     const [drivers] = await db.query(
       `SELECT id, full_name, license_number, license_type, phone, address, 
-              date_of_birth, status, is_active, created_at
+              date_of_birth, status, created_at
        FROM drivers 
        WHERE po_id = ? 
        ORDER BY created_at DESC`,
@@ -43,8 +43,8 @@ router.post('/', verifyToken, async (req, res) => {
     
     const [result] = await db.query(
       `INSERT INTO drivers 
-       (po_id, full_name, license_number, license_type, phone, address, date_of_birth, status, is_active, created_at) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'active', 1, NOW())`,
+       (po_id, full_name, license_number, license_type, phone, address, date_of_birth, status, created_at) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'active', NOW())`,
       [req.poId, full_name, license_number, license_type || 'A', phone, address || null, date_of_birth || null]
     );
     
@@ -69,16 +69,15 @@ router.put('/:id', verifyToken, async (req, res) => {
       phone,
       address,
       date_of_birth,
-      status,
-      is_active
+      status
     } = req.body;
     
     const [result] = await db.query(
       `UPDATE drivers 
        SET full_name = ?, license_number = ?, license_type = ?, phone = ?, 
-           address = ?, date_of_birth = ?, status = ?, is_active = ?
+           address = ?, date_of_birth = ?, status = ?
        WHERE id = ? AND po_id = ?`,
-      [full_name, license_number, license_type, phone, address, date_of_birth, status || 'active', is_active ? 1 : 0, req.params.id, req.poId]
+      [full_name, license_number, license_type, phone, address, date_of_birth, status || 'active', req.params.id, req.poId]
     );
     
     if (result.affectedRows === 0) {
