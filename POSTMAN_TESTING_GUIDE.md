@@ -10,7 +10,7 @@
 
 ### 2. Setup Environment Variables
 Collection sudah include variables:
-- `base_url`: http://localhost:3000/api (ganti dengan Railway URL jika test production)
+- `base_url`: https://travel-po-api-production.up.railway.app/api (URL Railway production)
 - `token`: Auto-saved setelah login
 - `driver_id`: 1 (ganti sesuai data di database)
 - `travel_id`: 1 (ganti sesuai data di database)
