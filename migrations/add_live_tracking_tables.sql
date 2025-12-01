@@ -134,22 +134,38 @@ CREATE TABLE IF NOT EXISTS pickup_queue (
   INDEX idx_pickup_order (travel_id, pickup_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Add columns to bookings table if not exists
+-- Add columns to bookings table (skip if already exists)
 ALTER TABLE bookings 
-ADD COLUMN IF NOT EXISTS pickup_latitude DECIMAL(10, 8),
-ADD COLUMN IF NOT EXISTS pickup_longitude DECIMAL(11, 8),
-ADD COLUMN IF NOT EXISTS pickup_address TEXT,
-ADD COLUMN IF NOT EXISTS is_tracking_enabled BOOLEAN DEFAULT TRUE;
+ADD COLUMN pickup_latitude DECIMAL(10, 8);
 
--- Add columns to drivers table if not exists
+ALTER TABLE bookings 
+ADD COLUMN pickup_longitude DECIMAL(11, 8);
+
+ALTER TABLE bookings 
+ADD COLUMN pickup_address TEXT;
+
+ALTER TABLE bookings 
+ADD COLUMN is_tracking_enabled BOOLEAN DEFAULT TRUE;
+
+-- Add columns to drivers table (skip if already exists)
 ALTER TABLE drivers 
-ADD COLUMN IF NOT EXISTS is_available BOOLEAN DEFAULT TRUE,
-ADD COLUMN IF NOT EXISTS current_latitude DECIMAL(10, 8),
-ADD COLUMN IF NOT EXISTS current_longitude DECIMAL(11, 8),
-ADD COLUMN IF NOT EXISTS last_location_update TIMESTAMP NULL;
+ADD COLUMN is_available BOOLEAN DEFAULT TRUE;
 
--- Add columns to travels table if not exists
+ALTER TABLE drivers 
+ADD COLUMN current_latitude DECIMAL(10, 8);
+
+ALTER TABLE drivers 
+ADD COLUMN current_longitude DECIMAL(11, 8);
+
+ALTER TABLE drivers 
+ADD COLUMN last_location_update TIMESTAMP NULL;
+
+-- Add columns to travels table (skip if already exists)
 ALTER TABLE travels 
-ADD COLUMN IF NOT EXISTS tracking_enabled BOOLEAN DEFAULT TRUE,
-ADD COLUMN IF NOT EXISTS weather_alert BOOLEAN DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS weather_condition VARCHAR(50);
+ADD COLUMN tracking_enabled BOOLEAN DEFAULT TRUE;
+
+ALTER TABLE travels 
+ADD COLUMN weather_alert BOOLEAN DEFAULT FALSE;
+
+ALTER TABLE travels 
+ADD COLUMN weather_condition VARCHAR(50);

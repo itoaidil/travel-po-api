@@ -32,10 +32,31 @@ async function runMigration() {
     
     console.log('⚙️  Executing migration...\n');
     
-    // Execute migration
-    await connection.query(sql);
+    // Split SQL by semicolon and execute one by one to handle errors gracefully
+    const statements = sql
+      .split(';')
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && !s.startsWith('--'));
     
-    console.log('✅ Migration completed successfully!\n');
+    let successCount = 0;
+    let skipCount = 0;
+    
+    for (const statement of statements) {
+      try {
+        await connection.query(statement);
+        successCount++;
+      } catch (error) {
+        // Skip if column/table already exists
+        if (error.errno === 1060 || error.errno === 1050) {
+          console.log(`⚠️  Skipped (already exists): ${error.message.substring(0, 80)}...`);
+          skipCount++;
+        } else {
+          throw error;
+        }
+      }
+    }
+    
+    console.log(`✅ Migration completed: ${successCount} statements executed, ${skipCount} skipped\n`);
     
     // Verify tables created
     console.log('🔍 Verifying tables...');
