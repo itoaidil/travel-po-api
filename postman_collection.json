@@ -1,0 +1,489 @@
+{
+  "info": {
+    "name": "Travel PO API - Live Tracking & Weather",
+    "description": "Collection untuk testing Live Tracking dan Weather API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "driver_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "travel_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login PO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('token', jsonData.token);",
+                  "    console.log('Token saved:', jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"test_po1\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login dengan credentials PO untuk mendapatkan JWT token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Live Tracking - Driver Location",
+      "item": [
+        {
+          "name": "Update Driver Location",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driver_id\": 1,\n  \"travel_id\": 1,\n  \"latitude\": -0.9471168,\n  \"longitude\": 100.4174862,\n  \"speed\": 45.5,\n  \"heading\": 180.0,\n  \"accuracy\": 5.0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tracking/driver-location",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "driver-location"]
+            },
+            "description": "Update lokasi GPS driver secara real-time. Koordinat contoh: Padang, Sumatera Barat"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Driver Location",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tracking/driver-location/{{driver_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "driver-location", "{{driver_id}}"]
+            },
+            "description": "Mendapatkan lokasi terkini dari driver tertentu"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Live Tracking - Travel",
+      "item": [
+        {
+          "name": "Start Travel Tracking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"travel_id\": 1,\n  \"driver_id\": 1,\n  \"tracking_status\": \"waiting\",\n  \"pickup_eta_minutes\": 15,\n  \"journey_eta_minutes\": 120,\n  \"total_distance_km\": 85.5,\n  \"remaining_distance_km\": 85.5,\n  \"current_location_name\": \"Padang\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tracking/travel",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "travel"]
+            },
+            "description": "Memulai tracking untuk perjalanan. Status: waiting, picking_up, on_route, arrived, completed, cancelled"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Travel Status to Picking Up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"travel_id\": 1,\n  \"driver_id\": 1,\n  \"tracking_status\": \"picking_up\",\n  \"pickup_eta_minutes\": 10,\n  \"current_location_name\": \"Menuju lokasi penjemputan pertama\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tracking/travel",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "travel"]
+            },
+            "description": "Update status menjadi picking_up saat driver mulai menjemput customer"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Travel Status to On Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"travel_id\": 1,\n  \"driver_id\": 1,\n  \"tracking_status\": \"on_route\",\n  \"journey_eta_minutes\": 90,\n  \"remaining_distance_km\": 70.5,\n  \"current_location_name\": \"Padang Panjang\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tracking/travel",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "travel"]
+            },
+            "description": "Update status menjadi on_route saat semua customer sudah naik dan dalam perjalanan"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Travel Tracking Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tracking/travel/{{travel_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "travel", "{{travel_id}}"]
+            },
+            "description": "Mendapatkan detail tracking lengkap untuk perjalanan tertentu"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Active Travels (PO Monitor)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tracking/active-travels",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "active-travels"]
+            },
+            "description": "Mendapatkan semua travel aktif yang sedang di-track (untuk dashboard PO)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Live Tracking - Pickup Queue",
+      "item": [
+        {
+          "name": "Create Pickup Queue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"travel_id\": 1,\n  \"driver_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tracking/pickup-queue",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "pickup-queue"]
+            },
+            "description": "Membuat antrian penjemputan berdasarkan jarak terdekat dari driver. Customer terdekat akan dijemput duluan."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pickup Queue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tracking/pickup-queue/{{travel_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "pickup-queue", "{{travel_id}}"]
+            },
+            "description": "Mendapatkan daftar antrian penjemputan untuk travel tertentu, terurut dari terdekat"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Pickup Status - In Progress",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickup_status\": \"in_progress\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tracking/pickup-queue/1/status",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "pickup-queue", "1", "status"]
+            },
+            "description": "Update status menjadi in_progress saat driver menuju lokasi pickup. Ganti '1' dengan pickup_queue ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Pickup Status - Picked Up",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickup_status\": \"picked_up\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tracking/pickup-queue/1/status",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "pickup-queue", "1", "status"]
+            },
+            "description": "Update status menjadi picked_up saat customer sudah naik. Ganti '1' dengan pickup_queue ID."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Weather API",
+      "item": [
+        {
+          "name": "Get Weather by Location (Padang)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/weather/location?latitude=-0.9471168&longitude=100.4174862&location_name=Padang",
+              "host": ["{{base_url}}"],
+              "path": ["weather", "location"],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "-0.9471168"
+                },
+                {
+                  "key": "longitude",
+                  "value": "100.4174862"
+                },
+                {
+                  "key": "location_name",
+                  "value": "Padang"
+                }
+              ]
+            },
+            "description": "Mendapatkan kondisi cuaca untuk lokasi tertentu (Padang). Perlu OPENWEATHER_API_KEY di .env"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Weather by Location (Bukittinggi)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/weather/location?latitude=-0.3055&longitude=100.3692&location_name=Bukittinggi",
+              "host": ["{{base_url}}"],
+              "path": ["weather", "location"],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "-0.3055"
+                },
+                {
+                  "key": "longitude",
+                  "value": "100.3692"
+                },
+                {
+                  "key": "location_name",
+                  "value": "Bukittinggi"
+                }
+              ]
+            },
+            "description": "Mendapatkan kondisi cuaca untuk Bukittinggi"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Weather for Route (Padang-Bukittinggi)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/weather/route?origin_lat=-0.9471168&origin_lon=100.4174862&origin_name=Padang&dest_lat=-0.3055&dest_lon=100.3692&dest_name=Bukittinggi",
+              "host": ["{{base_url}}"],
+              "path": ["weather", "route"],
+              "query": [
+                {
+                  "key": "origin_lat",
+                  "value": "-0.9471168"
+                },
+                {
+                  "key": "origin_lon",
+                  "value": "100.4174862"
+                },
+                {
+                  "key": "origin_name",
+                  "value": "Padang"
+                },
+                {
+                  "key": "dest_lat",
+                  "value": "-0.3055"
+                },
+                {
+                  "key": "dest_lon",
+                  "value": "100.3692"
+                },
+                {
+                  "key": "dest_name",
+                  "value": "Bukittinggi"
+                }
+              ]
+            },
+            "description": "Mendapatkan cuaca untuk rute (origin dan destination) dengan weather alert"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Weather for Travel",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/weather/travel/{{travel_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["weather", "travel", "{{travel_id}}"]
+            },
+            "description": "Mendapatkan kondisi cuaca untuk travel tertentu (origin & destination)"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
