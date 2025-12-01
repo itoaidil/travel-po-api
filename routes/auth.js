@@ -167,4 +167,28 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-module.exports = { router, verifyToken };
+// Middleware for verifying student JWT token
+const verifyStudentToken = (req, res, next) => {
+  const token = req.headers['authorization']?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Token tidak ditemukan' 
+    });
+  }
+  
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Token tidak valid' 
+      });
+    }
+    req.studentId = decoded.studentId;
+    req.email = decoded.email;
+    next();
+  });
+};
+
+module.exports = { router, verifyToken, verifyStudentToken };
