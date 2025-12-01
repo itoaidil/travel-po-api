@@ -37,6 +37,8 @@ const driversRoutes = require('./routes/drivers');
 const travelsRoutes = require('./routes/travels');
 const bookingsRoutes = require('./routes/bookings');
 const locationsRoutes = require('./routes/locations');
+const trackingRoutes = require('./routes/tracking');
+const weatherRoutes = require('./routes/weather');
 
 // Mount routes
 app.use('/api/auth', authRoutes);
@@ -45,6 +47,8 @@ app.use('/api/drivers', driversRoutes);
 app.use('/api/travels', travelsRoutes);
 app.use('/api/bookings', bookingsRoutes);
 app.use('/api/locations', locationsRoutes);
+app.use('/api/tracking', trackingRoutes);
+app.use('/api/weather', weatherRoutes);
 
 // 404 handler
 app.use((req, res) => {
